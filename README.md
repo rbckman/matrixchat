@@ -1,5 +1,7 @@
-MATRIX CHAT CLIENT USING MATRIX-PYTHON-SDK AND CURSES
-====================================================
+MATRIX CHAT CLIENT
+==================
+Using matrix-python-sdk and curses (becuse we all love curses)
+-------------------------------------------------------------
 This is a really simple python chat client. Just for simple use but also to mess-a-round with matrix.
  
 INSTALLING ON DEBIAN STRETCH
