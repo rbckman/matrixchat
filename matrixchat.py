@@ -1,12 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""
-MATRIX CHAT
-python matrix chat using matrix-python-sdk and curses
-config file saves to '~/.matrixchat/setup.cfg'
 
-made by rbckman
 """
+###-----------|  MATRIX CHAT CLIENT  |------------###
+python matrix chat using matrix-python-sdk and curses
+
+hacked by rbckman
+-----------------------------------------------------
+"""
+
 import curses
 import sys
 import os
@@ -22,6 +24,10 @@ from matrix_client.client import MatrixClient
 from matrix_client.errors import E2EUnknownDevices
 from os.path import expanduser
 
+
+###----------|  CONFIG STUFF STARTS  |----------###
+
+
 def argparser():
     parser = argparse.ArgumentParser(description='Matrix Chat using matri-python-sdk and curses', epilog='development at https://github.com/rbckman/matrixchat')
     parser.add_argument('-c', '--configfile', help='config file, defaults to ~/.matrixchat/config.ini')
@@ -31,6 +37,7 @@ def argparser():
     else:
         return ''
 
+
 def getconfig(configfile):
     global logs
     home = expanduser("~")
@@ -39,6 +46,7 @@ def getconfig(configfile):
     else:
         print('using config file: ' + configfile)
     configdir = os.path.dirname(configfile)
+    debug = configdir + '/debug.log'
     if not os.path.isdir(configdir):
         os.makedirs(configdir)
     config = configparser.ConfigParser()
@@ -64,7 +72,11 @@ def getconfig(configfile):
             config[host]['logs'] = logs
             with open(configfile,'w') as f:
                 config.write(f)
-    return host, user, password, logs
+    return host, user, password, logs, debug
+
+
+###-------|  CUZ EVERYONE LIKES CURSES  |------###
+
 
 def startcurses():
     screen = curses.initscr()
@@ -84,9 +96,14 @@ def stopcurses(screen):
     screen.keypad(False)
     curses.endwin()
 
-def writetolog(newmessage):
+
+###-------| THE BASIC FUNCTIONS  |-------------###
+
+
+def writetolog(newmessage, room_id):
     with open(logs + room_id + '.log', 'a') as out:
         out.write(newmessage + '\n')
+
 
 def on_message(room, event):
     if event['type'] == "m.room.member":
@@ -95,60 +112,73 @@ def on_message(room, event):
     elif event['type'] == "m.room.message":
         if event['content']['msgtype'] == "m.text":
             ts = int(event['origin_server_ts'])/1000
-            msgtime = datetime.fromtimestamp(ts).strftime('%d/%m-%H:%M:')
+            msgtime = datetime.fromtimestamp(ts).strftime('%d/%m-%H:%M')
             buddy = " {0}".format(event['sender'])
             buddy = buddy.split(':')[0]
             msg =  " {0}".format(event['content']['body'])
-            newmessage = msgtime + buddy + msg
+            newmessage = msgtime + buddy + ':' + msg
     else:
         newmessage = (event['type'])
-    writetolog(newmessage) 
+    room.update_aliases()
+    for i in room.aliases:
+        room_id = i
+        break
+    writetolog(newmessage, room_id) 
 
-def connect(host, user_id, password, room_id):
+
+def connect(host, user_id, password):
+    global client
     try:
         client = MatrixClient(host, encryption=True, restore_device_id=True)
         client.login(username=user_id, password=password)
         device_id = client.device_id
         fingerprint = client.get_fingerprint()
         assert client.device_id == device_id
+        client.start_listener_thread(timeout_ms=30000, exception_handler=None)
+        client.should_listen = 30000
+        # Print every keys which arrive to us
+        client.add_key_forward_listener(lambda x: writetolog('got new keys' + x))
     except:
+        logging.exception('')
         quit()
+    return(client, device_id)
+
+
+def joinroom(client, device_id, room_id):
     try:
         room = client.join_room(room_id)
-        #room.verify_devices = True
-    except MatrixRequestError as e:
-        print(e)
-        if e.code == 400:
-            print("Room ID/Alias in the wrong format")
-            sys.exit(11)
-        else:
-            print("Couldn't find room.")
-            sys.exit(12)
+    except:
+        logging.exception('')
+        try:
+            room = client.create_room(alias=room_id, is_public=False, invitees=None)
+        except:
+            logging.exception('')
     try:
+        room.send_text("MatrixRob is here!")
         pass
     except E2EUnknownDevices as e:
+        #room.verify_devices = True
         # We don't know anyone, but send anyway
         for user_id, devices in e.user_devices.items():
             for device in devices:
                 #device.verified = True
                 device.ignored = True
                 # Out-of-band verification should allow to do device.verified = True instead
-    username = user_id.split(':')[0]
-    with open(logs + room_id + '.log', 'a') as f:
-        f.write('Hello ' + username + '! \nyou are talking in room ' + room_id + '\non host ' + host + '\n')
     room.add_listener(on_message)
-    client.start_listener_thread(timeout_ms=30000, exception_handler=None)
-    client.should_listen = 30000
-    # Print every keys which arrive to us
-    client.add_key_forward_listener(lambda x: print(t.blue('got new keys' + x)))
-    return client, room
+    return room
 
-def main(screen, client, room, user_id, room_id):
+
+
+###-------| ROOM STUFF HAPPENING FROM HERE |-------###
+
+
+def main(screen, client, user_id, rooms, room_id, room_ids):
     username = user_id.split(':')[0]
     msg = ''
     fps = 0
     scroll = 0
     key = 0
+    selectroom = len(room_ids) - 1
     maxyx = screen.getmaxyx()
     cursor = screen.getyx()
     while True:
@@ -171,24 +201,30 @@ def main(screen, client, room, user_id, room_id):
         if maxyx != screen.getmaxyx():
             maxyx = screen.getmaxyx()
         cursor = screen.getyx()
-        #if backspace
-        if key == 263:
-            msg = msg[:-1]
-        #if enter key
-        elif key == 10:
+        if key == 10:
             newmessage = ''
             try:
                 if msg == "/quit":
-                    break
+                    return msg, ''
+                elif '/join' in msg:
+                    return msg.split(' ')[0], msg.split(' ')[1]
+                    msg = ''
+                elif msg == "/listrooms":
+                    listrooms = client.get_rooms()
+                    for l in listrooms:
+                        for p in listrooms[l].aliases:
+                            newmessage += 'alias ' + p + '\n'
+                        newmessage += listrooms[l].room_id + '\n'
+                    msg = ''
                 elif msg == "/avatars":
-                    whoishere = room.get_joined_members()
+                    whoishere = rooms[selectroom].get_joined_members()
                     newmessage = 'we have '
                     for i in whoishere:
                         newmessage += i.get_friendly_name() + ', '
                     newmessage += 'in the room'
                     msg = ''
                 elif msg == "/code":
-                    code.interact(local=locals())
+                    return msg, ''
                     msg = ''
                 elif msg == "/debug=0":
                     logging.basicConfig(level=logging.CRITICAL)
@@ -197,22 +233,38 @@ def main(screen, client, room, user_id, room_id):
                     logging.basicConfig(level=logging.DEBUG)
                     msg = ''
                 else:
-                    room.send_text(msg)
+                    rooms[selectroom].send_text(msg)
                     msg = ''
             except:
+                logging.exception('')
                 newmessage = ('Oops! something wrong!\n')
             if newmessage != '':
-                writetolog(newmessage)
+                writetolog(newmessage, room_id)
+        elif key == 263:
+            msg = msg[:-1]
         elif key == 339 or key == 259:
             scroll += 1
         elif key == 338 or key == 258:
             if scroll > 0:
                 scroll = scroll - 1
+        elif key == 261:
+            if selectroom < len(room_ids) - 1:
+                selectroom += 1
+        elif key == 260:
+            if selectroom > 0:
+                selectroom -= 1
+        room_id = room_ids[selectroom]
         screen.clear()
         fps += 1
         msgheight = int(len(msg)/maxyx[1] + 3)
         screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
-        chatlog = [line.rstrip('\n') for line in open(logs + room_id + '.log')]
+        if room_id:
+            if not os.path.isfile(logs + room_id + '.log'):
+                with open(logs + room_id + '.log', 'a') as out:
+                    out.write('Welcome to ' + room_id + '!\n')
+            chatlog = [line.rstrip('\n') for line in open(logs + room_id + '.log')]
+        else:
+            chatlog = 'Join or create a room! ex. /join #hackings'
         if scroll > 0:
             chatlog = chatlog[-(maxyx[0] - msgheight) - scroll : - scroll]
         else:
@@ -235,12 +287,40 @@ def main(screen, client, room, user_id, room_id):
         screen.addstr(maxyx[0]-int(len(nicemsg)/maxyx[1] + 2),0,nicemsg, curses.color_pair(71))
         screen.refresh()
 
+
+###---------| FINALLY WE PUT EVERYTHING TOGETHER |---------###
+
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.WARNING)
     configfile = argparser()
-    host, user, password, logs = getconfig(configfile)
+    host, user, password, logs, debug = getconfig(configfile)
+    logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
     screen = startcurses()
-    room_id = '#hackingwithrob:bennysmatrixchat.ddns.net'
-    client, room = connect(host, user, password, room_id)
-    main(screen, client, room, user, room_id)
+    client, device_id = connect(host, user, password)
+    rooms = []
+    room_id = ''
+    room_ids = []
+    for a in os.listdir(logs):
+        room_id = a[:-4]
+        room_ids.append(room_id)
+        rooms.append(joinroom(client, device_id, room_id))
+    while True:
+        cmd, attr = main(screen, client, user, rooms, room_id, room_ids)
+        if cmd == '/join':
+            if attr not in room_ids:
+                try:
+                    rooms.append(joinroom(client, device_id, attr))
+                    rooms[-1].update_aliases()
+                    for i in rooms[-1].aliases:
+                        room_id = i
+                    room_ids.append(room_id)
+                except:
+                    logging.exception('')
+                    writetolog('something went wrong', room_id)
+        elif cmd == '/code':
+            stopcurses(screen)
+            code.interact(local=locals())
+            screen = startcurses()
+        elif cmd == '/quit':
+            break
     stopcurses(screen)
