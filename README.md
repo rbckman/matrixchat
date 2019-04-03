@@ -19,7 +19,7 @@ sudo pip3 install pip==18.1
 ```
 then
 ```
-git clone ssh://rob@tarina.org:13337/home/rob/matrixrob
+git clone https://github.com/rbckman/matrixchat.git
 ```
 I also had to do this after I built olm and olm-python
 ```
