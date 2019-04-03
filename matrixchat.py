@@ -230,7 +230,9 @@ def main(screen, client, room, user_id, room_id):
                 pass
             if y < 2:
                 break
-        screen.addstr(maxyx[0] - int(len(msg)/maxyx[1] + 2),0,username + ': ' + msg, curses.color_pair(71))
+        screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
+        nicemsg = username + ': ' + msg
+        screen.addstr(maxyx[0]-int(len(nicemsg)/maxyx[1] + 2),0,nicemsg, curses.color_pair(71))
         screen.refresh()
 
 if __name__ == '__main__':
