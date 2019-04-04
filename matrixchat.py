@@ -186,6 +186,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
         key = 0
         try:
             c = screen.get_wch()
+            screen.clear()
             if isinstance(c,int):
                 key = c
             elif isinstance(c,str):
@@ -238,7 +239,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             except:
                 logging.exception('')
                 newmessage = ('Oops! something wrong!\n')
-            if newmessage != '':
+            if newmessage != '' and room_id:
                 writetolog(newmessage, room_id)
         elif key == 263:
             msg = msg[:-1]
@@ -251,10 +252,10 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             if selectroom < len(room_ids) - 1:
                 selectroom += 1
         elif key == 260:
-            if selectroom > 0:
+            if selectroom > 1:
                 selectroom -= 1
-        room_id = room_ids[selectroom]
-        screen.clear()
+        if room_id:
+            room_id = room_ids[selectroom]
         fps += 1
         msgheight = int(len(msg)/maxyx[1] + 3)
         screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
@@ -264,7 +265,11 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
                     out.write('Welcome to ' + room_id + '!\n')
             chatlog = [line.rstrip('\n') for line in open(logs + room_id + '.log')]
         else:
-            chatlog = 'Join or create a room! ex. /join #hackings'
+            chatlog = ['Join or create a room!']
+            listrooms = client.get_rooms()
+            for l in listrooms:
+                for p in listrooms[l].aliases:
+                    chatlog.append('/join ' + p + '\n')
         if scroll > 0:
             chatlog = chatlog[-(maxyx[0] - msgheight) - scroll : - scroll]
         else:
@@ -279,6 +284,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             try:
                 screen.addstr(y,0,a,curses.color_pair(i))
             except:
+                logging.exception('')
                 pass
             if y < 2:
                 break
@@ -303,7 +309,10 @@ if __name__ == '__main__':
     for a in os.listdir(logs):
         room_id = a[:-4]
         room_ids.append(room_id)
-        rooms.append(joinroom(client, device_id, room_id))
+        try:
+            rooms.append(joinroom(client, device_id, room_id))
+        except:
+            logging.exception('')
     while True:
         cmd, attr = main(screen, client, user, rooms, room_id, room_ids)
         if cmd == '/join':
