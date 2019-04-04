@@ -101,8 +101,9 @@ def stopcurses(screen):
 
 
 def writetolog(newmessage, room_id):
-    with open(logs + room_id + '.log', 'a') as out:
-        out.write(newmessage + '\n')
+    if room_id:
+        with open(logs + room_id + '.log', 'a') as out:
+            out.write(newmessage + '\n')
 
 
 def on_message(room, event):
@@ -121,9 +122,9 @@ def on_message(room, event):
         newmessage = (event['type'])
     room.update_aliases()
     for i in room.aliases:
-        room_id = i
+        room_alias = i
         break
-    writetolog(newmessage, room_id) 
+    writetolog(newmessage, room_alias) 
 
 
 def connect(host, user_id, password):
@@ -131,22 +132,22 @@ def connect(host, user_id, password):
     try:
         client = MatrixClient(host, encryption=True, restore_device_id=True)
         client.login(username=user_id, password=password)
-        device_id = client.device_id
-        fingerprint = client.get_fingerprint()
-        assert client.device_id == device_id
         client.start_listener_thread(timeout_ms=30000, exception_handler=None)
         client.should_listen = 30000
-        # Print every keys which arrive to us
         client.add_key_forward_listener(lambda x: writetolog('got new keys' + x))
     except:
         logging.exception('')
         quit()
-    return(client, device_id)
+    return(client)
 
 
-def joinroom(client, device_id, room_id):
+def joinroom(client, room_id):
     try:
         room = client.join_room(room_id)
+        device_id = client.device_id
+        fingerprint = client.get_fingerprint()
+        assert client.device_id == device_id
+        # Print every keys which arrive to us
     except:
         logging.exception('')
         try:
@@ -186,7 +187,6 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
         key = 0
         try:
             c = screen.get_wch()
-            screen.clear()
             if isinstance(c,int):
                 key = c
             elif isinstance(c,str):
@@ -252,11 +252,12 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             if selectroom < len(room_ids) - 1:
                 selectroom += 1
         elif key == 260:
-            if selectroom > 1:
+            if selectroom > 0:
                 selectroom -= 1
         if room_id:
             room_id = room_ids[selectroom]
         fps += 1
+        screen.clear()
         msgheight = int(len(msg)/maxyx[1] + 3)
         screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
         if room_id:
@@ -302,23 +303,24 @@ if __name__ == '__main__':
     host, user, password, logs, debug = getconfig(configfile)
     logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
     screen = startcurses()
-    client, device_id = connect(host, user, password)
+    client = connect(host, user, password)
     rooms = []
     room_id = ''
     room_ids = []
     for a in os.listdir(logs):
         room_id = a[:-4]
-        room_ids.append(room_id)
-        try:
-            rooms.append(joinroom(client, device_id, room_id))
-        except:
-            logging.exception('')
+        rooms.append(joinroom(client, room_id))
+    for i in rooms:
+        i.update_aliases()
+        for p in i.aliases:
+            room_ids.append(p)
+            break
     while True:
         cmd, attr = main(screen, client, user, rooms, room_id, room_ids)
         if cmd == '/join':
             if attr not in room_ids:
                 try:
-                    rooms.append(joinroom(client, device_id, attr))
+                    rooms.append(joinroom(client, attr))
                     rooms[-1].update_aliases()
                     for i in rooms[-1].aliases:
                         room_id = i
