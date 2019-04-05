@@ -16,7 +16,6 @@ import logging
 import configparser
 import argparse
 import getpass
-from hashlib import sha224
 from datetime import datetime
 import code
 import time
@@ -81,6 +80,7 @@ def getconfig(configfile):
 def startcurses():
     screen = curses.initscr()
     curses.cbreak()
+    curses.noecho()
     curses.start_color()
     curses.use_default_colors()
     for i in range(0, curses.COLORS):
@@ -92,8 +92,9 @@ def startcurses():
     return screen
 
 def stopcurses(screen):
-    curses.nocbreak()
     screen.keypad(False)
+    curses.nocbreak()
+    curses.echo()
     curses.endwin()
 
 
@@ -258,8 +259,9 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             room_id = room_ids[selectroom]
         fps += 1
         screen.clear()
-        msgheight = int(len(msg)/maxyx[1] + 3)
+        #show debuugging stuff
         screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
+        #load messages from file in log directory
         if room_id:
             if not os.path.isfile(logs + room_id + '.log'):
                 with open(logs + room_id + '.log', 'a') as out:
@@ -271,10 +273,14 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             for l in listrooms:
                 for p in listrooms[l].aliases:
                     chatlog.append('/join ' + p + '\n')
+        #if scrolling then put messages in that place
+        usrmsg = username + ': ' + msg
+        msgheight = int(len(usrmsg)/maxyx[1] + 3)
         if scroll > 0:
             chatlog = chatlog[-(maxyx[0] - msgheight) - scroll : - scroll]
         else:
             chatlog = chatlog[-(maxyx[0] - msgheight):]
+        #reverse chatlog so latest message is at bottom
         chatlog = chatlog[::-1]
         y = maxyx[0] - msgheight
         for a in chatlog:
@@ -290,8 +296,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             if y < 2:
                 break
         screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
-        nicemsg = username + ': ' + msg
-        screen.addstr(maxyx[0]-int(len(nicemsg)/maxyx[1] + 2),0,nicemsg, curses.color_pair(71))
+        screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
         screen.refresh()
 
 
