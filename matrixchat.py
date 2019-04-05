@@ -108,6 +108,7 @@ def writetolog(newmessage, room_id):
 
 
 def on_message(room, event):
+    newmessage = ''
     if event['type'] == "m.room.member":
         if event['membership'] == "join":
             newmessage = ("{0} joined".format(event['content']['displayname']))
