@@ -109,17 +109,29 @@ def writetolog(newmessage, room_id):
 
 def on_message(room, event):
     newmessage = ''
+    ts = int(event['origin_server_ts'])/1000
+    msgtime = datetime.fromtimestamp(ts).strftime('%d/%m-%H:%M') + ' '
     if event['type'] == "m.room.member":
         if event['membership'] == "join":
-            newmessage = ("{0} joined".format(event['content']['displayname']))
+            newmessage = msgtime + ("{0} joined".format(event['content']['displayname']))
     elif event['type'] == "m.room.message":
+        buddy = "{0}".format(event['sender'])
+        buddy = buddy.split(':')[0] + ': '
         if event['content']['msgtype'] == "m.text":
-            ts = int(event['origin_server_ts'])/1000
-            msgtime = datetime.fromtimestamp(ts).strftime('%d/%m-%H:%M')
-            buddy = " {0}".format(event['sender'])
-            buddy = buddy.split(':')[0]
-            msg =  " {0}".format(event['content']['body'])
-            newmessage = msgtime + buddy + ':' + msg
+            msg =  "{0}".format(event['content']['body'])
+        elif event['content']['msgtype'] == "m.image": 
+            msg =  "image: {0}".format(event['content']['body'] + '\n')
+            msg += "{0}".format(event['content']['file'])
+            #msg +=  "size:  {0}".format(event['content']['size'])
+        elif event['content']['msgtype'] == "m.file": 
+            msg =  "file: {0}".format(event['content']['body'] + '\n')
+            msg +=  "{0}".format(event['content']['file'])
+            #msg +=  "size:  {0}".format(event['content']['size'])
+        elif event['content']['msgtype'] == "m.audio": 
+            msg =  "audio: {0}".format(event['content']['body'] + '\n')
+            msg +=  "{0}".format(event['content']['file'])
+            #msg +=  "size:  {0}".format(event['content']['size'])
+        newmessage = msgtime + buddy + msg
     else:
         newmessage = (event['type'])
     room.update_aliases()
@@ -169,7 +181,6 @@ def joinroom(client, room_id):
                 # Out-of-band verification should allow to do device.verified = True instead
     room.add_listener(on_message)
     return room
-
 
 
 ###-------| ROOM STUFF HAPPENING FROM HERE |-------###
@@ -258,12 +269,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
                 selectroom -= 1
         if room_id:
             room_id = room_ids[selectroom]
-        fps += 1
-        screen.clear()
-        #show debuugging stuff
-        screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
-        #load messages from file in log directory
-        if room_id:
+            #load messages from file in log directory
             if not os.path.isfile(logs + room_id + '.log'):
                 with open(logs + room_id + '.log', 'a') as out:
                     out.write('Welcome to ' + room_id + '!\n')
@@ -274,7 +280,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
             for l in listrooms:
                 for p in listrooms[l].aliases:
                     chatlog.append('/join ' + p + '\n')
-        #if scrolling then put messages in that place
+        #if scrolling then put messages in where they should be
         usrmsg = username + ': ' + msg
         msgheight = int(len(usrmsg)/maxyx[1] + 3)
         if scroll > 0:
@@ -284,6 +290,8 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
         #reverse chatlog so latest message is at bottom
         chatlog = chatlog[::-1]
         y = maxyx[0] - msgheight
+        fps += 1
+        screen.clear()
         for a in chatlog:
             #just fancy colors
             i = (len(a) % 10) + 245
@@ -296,6 +304,8 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
                 pass
             if y < 2:
                 break
+        #show debuugging stuff
+        #screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
         screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
         screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
         screen.refresh()
