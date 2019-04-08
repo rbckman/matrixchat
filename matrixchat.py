@@ -19,10 +19,10 @@ import getpass
 from datetime import datetime
 import code
 import time
+import requests
 from matrix_client.client import MatrixClient
 from matrix_client.errors import E2EUnknownDevices
 from os.path import expanduser
-
 
 ###----------|  CONFIG STUFF STARTS  |----------###
 
@@ -140,6 +140,16 @@ def on_message(room, event):
         break
     writetolog(newmessage, room_alias) 
 
+def resetconnection(screen, client):
+    screen.addstr(0,0, 'Oops! no connection, trying again in 5 sec...') 
+    screen.refresh()
+    client.start_listener_thread()
+    client.stop_listener_thread()
+    client.start_listener_thread()
+    return
+
+def connectionlost(e):
+    logging.exception(e)
 
 def connect(host, user_id, password):
     global client
@@ -147,13 +157,14 @@ def connect(host, user_id, password):
         client = MatrixClient(host, encryption=True, restore_device_id=True)
         client.login(username=user_id, password=password)
         client.start_listener_thread(timeout_ms=30000, exception_handler=None)
-        client.should_listen = 30000
+        #client.bad_sync_timeout_limit = 0
+        #client.start_listener_thread()
+        #client.should_listen=30000
         client.add_key_forward_listener(lambda x: writetolog('got new keys' + x))
     except:
         logging.exception('')
         quit()
     return(client)
-
 
 def joinroom(client, room_id):
     try:
@@ -186,7 +197,7 @@ def joinroom(client, room_id):
 ###-------| ROOM STUFF HAPPENING FROM HERE |-------###
 
 
-def main(screen, client, user_id, rooms, room_id, room_ids):
+def main(screen, client, user_id, rooms, room_id, room_ids, host):
     username = user_id.split(':')[0]
     msg = ''
     fps = 0
@@ -196,6 +207,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
     maxyx = screen.getmaxyx()
     cursor = screen.getyx()
     while True:
+        roomusers = rooms[selectroom].display_name
         c = ''
         key = 0
         try:
@@ -222,6 +234,9 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
                     return msg, ''
                 elif '/join' in msg:
                     return msg.split(' ')[0], msg.split(' ')[1]
+                    msg = ''
+                elif '/reset' in msg:
+                    resetconnection(screen, client)
                     msg = ''
                 elif msg == "/listrooms":
                     listrooms = client.get_rooms()
@@ -306,6 +321,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
                 break
         #show debuugging stuff
         #screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
+        screen.addstr(0,0, roomusers[:maxyx[1]-2])
         screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
         screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
         screen.refresh()
@@ -317,7 +333,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids):
 if __name__ == '__main__':
     configfile = argparser()
     host, user, password, logs, debug = getconfig(configfile)
-    logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
+    logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.WARNING)
     screen = startcurses()
     client = connect(host, user, password)
     rooms = []
@@ -332,7 +348,7 @@ if __name__ == '__main__':
             room_ids.append(p)
             break
     while True:
-        cmd, attr = main(screen, client, user, rooms, room_id, room_ids)
+        cmd, attr = main(screen, client, user, rooms, room_id, room_ids, host)
         if cmd == '/join':
             if attr not in room_ids:
                 try:
