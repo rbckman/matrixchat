@@ -19,7 +19,6 @@ import getpass
 from datetime import datetime
 import code
 import time
-import requests
 from matrix_client.client import MatrixClient
 from matrix_client.errors import E2EUnknownDevices
 from os.path import expanduser
