@@ -11,7 +11,7 @@ Install these dependencies
 [matrix-python-sdk-e2e](https://github.com/Zil0/matrix-python-sdk/tree/e2e_beta_2)
 can be installed like this 
 ```
-sudo pip3 install -e 'git+https://github.com/Zil0/matrix-python-sdk@e2e_beta_2#egg=matrix-python-sdk-e2e[e2e]' --process-dependency-links
+pip3 install -e 'git+https://github.com/Zil0/matrix-python-sdk@e2e_beta_2#egg=matrix-python-sdk-e2e[e2e]' --process-dependency-links
 ```
 you need to have older pip (dependency-links is not supported in new pip), something like pip 18.1 works, if you have newer you need to do 
 ```
