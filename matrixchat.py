@@ -198,6 +198,7 @@ def joinroom(client, room_id):
 
 def main(screen, client, user_id, rooms, room_id, room_ids, host):
     username = user_id.split(':')[0]
+    roomusers = ''
     msg = ''
     fps = 0
     scroll = 0
@@ -206,7 +207,6 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
     maxyx = screen.getmaxyx()
     cursor = screen.getyx()
     while True:
-        roomusers = rooms[selectroom].display_name
         c = ''
         key = 0
         try:
@@ -283,6 +283,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                 selectroom -= 1
         if room_id:
             room_id = room_ids[selectroom]
+            roomusers = rooms[selectroom].display_name
             #load messages from file in log directory
             if not os.path.isfile(logs + room_id + '.log'):
                 with open(logs + room_id + '.log', 'a') as out:
