@@ -211,7 +211,7 @@ def bot(log):
             pass
     except:
         lastradio = 0
-        freqradio = 60
+        freqradio = 10
         lasthelp = 0
         freqhelp = 3600
         lastsong = ''
@@ -256,10 +256,10 @@ def bot(log):
         lastradio = time.time()
         try:
             newsong = subprocess.check_output(['/home/pi/rrr/nextsongs.sh']).decode().split('\n')
-            if lastsong != newsong:
+            if newsong[0] != lastsong:
                 msg = 'radiobot: ' + newsong[0].replace('/media/robinsfirma/djsmellsfunny/','')
                 msg += ' listen at http://radiorymd.com'
-                lastsong = newsong
+                lastsong = newsong[0]
         except:
             msg = 'radiobot: not feeling ok, chack logs..'
             logging.exception('')
