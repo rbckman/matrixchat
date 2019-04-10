@@ -12,6 +12,7 @@ hacked by rbckman
 import curses
 import sys
 import os
+import subprocess
 import logging
 import configparser
 import argparse
@@ -207,6 +208,7 @@ def bot(log, lastupdate):
     # botapi = key
     if time.time() - lastupdate > 18000:
         msg = "anet: Hello! I'm Anet printer, whats your name? run: [anet help] to see what u can do with me"
+        msg += "bakerbot: Whatsup evybaady, I'm bakerbot, I keep track of how much energy goes into robs ryebreads, check me out with [bakerbot status]"
         lastupdate = time.time()
     if 'anet help' in log:
         msg = "anet: Hello I'm Anet printer! [anet status] for my status" 
@@ -221,7 +223,18 @@ def bot(log, lastupdate):
             msg = "I'm currently offline, thanks for asking!"
             logging.exception('')
             pass
-        lastupdate = time.time()
+    if 'bakerbot status' in log:
+        try:
+            cmd = '/home/pi/smartpick/smartpick.py'
+            cmd2 = '/home/pi/smartpick/smartpick.py'
+            o = subprocess.check_output([cmd, 'http://smartpi.local']).decode().rstrip('\n')
+            o2 = subprocess.check_output([cmd2, 'http://smartpi2.local']).decode().rstrip('\n')
+            msg = 'bakerbot: Heres the stats for the owens and baking machines for today: ' + o
+            msg += ' and heres the stats for the other electronics: ' + o2
+        except:
+            msg = "Baker bot is feeling bad today! check the logs.."
+            logging.exception('')
+            pass
     return(msg, lastupdate)
 
 
