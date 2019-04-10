@@ -19,9 +19,11 @@ import getpass
 from datetime import datetime
 import code
 import time
+import requests
 from matrix_client.client import MatrixClient
 from matrix_client.errors import E2EUnknownDevices
 from os.path import expanduser
+
 
 ###----------|  CONFIG STUFF STARTS  |----------###
 
@@ -35,9 +37,8 @@ def argparser():
     else:
         return ''
 
-
 def getconfig(configfile):
-    global logs
+    global logs, botapi
     home = expanduser("~")
     if configfile == '':
         configfile = home +'/.matrixchat/config.ini'
@@ -53,6 +54,12 @@ def getconfig(configfile):
         user = config[host]['user']
         logs = config[host]['logs']
         password = config[host]['password']
+        try:
+            botapi = config['botapi']['botapi']
+        except:
+            botapi = ''
+            logging.exception('')
+            pass
     else:
         host = input('Enter host name (https://mymatrixserver.net:8448): ')
         user = input('Enter whole username (@rob:mymatrixserver.net): ')
@@ -192,6 +199,31 @@ def joinroom(client, room_id):
     room.add_listener(on_message)
     return room
 
+def bot(log, lastupdate):
+    msg = ''
+    #put your bot scripts here
+    #if you need to get information from an api put the key in /.matrixchat/config.ini file like this
+    # [botapi]
+    # botapi = key
+    if time.time() - lastupdate > 18000:
+        msg = "anet: Hello! I'm Anet printer, whats your name? run: [anet help] to see what u can do with me"
+        lastupdate = time.time()
+    if 'anet help' in log:
+        msg = "anet: Hello I'm Anet printer! [anet status] for my status" 
+    if 'anet status' in log: 
+        progress = requests.get(url=botapi).json()
+        try:
+            msg = 'anet:'+str(progress['state'])+' model:'+(progress['job']['file']['name'])
+            msg += ' time left: ' + str(int(progress['progress']['printTimeLeft']/60))
+            msg += ' has been printing for: ' + str(int(progress['progress']['printTime']/60)) + ' min'
+            msg += ' is ' + str(int(progress['progress']['completion'])) + '% complete'
+        except:
+            msg = "I'm currently offline, thanks for asking!"
+            logging.exception('')
+            pass
+        lastupdate = time.time()
+    return(msg, lastupdate)
+
 
 ###-------| ROOM STUFF HAPPENING FROM HERE |-------###
 
@@ -206,6 +238,8 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
     selectroom = len(room_ids) - 1
     maxyx = screen.getmaxyx()
     cursor = screen.getyx()
+    timeupdate = time.time()
+    oldbotmsg = ''
     while True:
         c = ''
         key = 0
@@ -234,7 +268,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                 elif '/join' in msg:
                     return msg.split(' ')[0], msg.split(' ')[1]
                     msg = ''
-                elif '/reset' in msg:
+                elif '/resync' in msg:
                     resetconnection(screen, client)
                     msg = ''
                 elif msg == "/listrooms":
@@ -260,7 +294,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                 elif msg == "/debug=1":
                     logging.basicConfig(level=logging.DEBUG)
                     msg = ''
-                else:
+                elif msg != '':
                     rooms[selectroom].send_text(msg)
                     msg = ''
             except:
@@ -289,6 +323,11 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                 with open(logs + room_id + '.log', 'a') as out:
                     out.write('Welcome to ' + room_id + '!\n')
             chatlog = [line.rstrip('\n') for line in open(logs + room_id + '.log')]
+            if botapi:
+                botmsg, timeupdate = bot(chatlog[-1], timeupdate)
+                if botmsg:
+                    rooms[selectroom].send_text(botmsg)
+                    botmsg = ''
         else:
             chatlog = ['Join or create a room!']
             listrooms = client.get_rooms()
