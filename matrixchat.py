@@ -451,8 +451,9 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                 break
         #show debuugging stuff
         #screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
+        screen.refresh()
         screen.addstr(0,0, roomusers[:maxyx[1]-2])
-        screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
+        screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2] + screen.KEY_EOS, curses.color_pair(242))
         screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
         screen.refresh()
 
