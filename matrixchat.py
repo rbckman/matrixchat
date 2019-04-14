@@ -55,12 +55,10 @@ def getconfig(configfile):
         user = config[host]['user']
         logs = config[host]['logs']
         password = config[host]['password']
-        try:
+        if 'botapi' in config:
             botapi = config['botapi']['botapi']
-        except:
+        else:
             botapi = ''
-            logging.exception('')
-            pass
     else:
         host = input('Enter host name (https://mymatrixserver.net:8448): ')
         user = input('Enter whole username (@rob:mymatrixserver.net): ')
@@ -211,9 +209,9 @@ def bot(log):
             pass
     except:
         lastradio = 0
-        freqradio = 10
+        freqradio = 3600
         lasthelp = 0
-        freqhelp = 3600
+        freqhelp = 86400
         lastsong = ''
     msg = ''
     # put your bot scripts here
@@ -252,7 +250,7 @@ def bot(log):
             pass
 
     #radiobot
-    elif time.time() - lastradio > freqradio:
+    elif (time.time() - lastradio > freqradio) or ('radiobot status' in log):
         lastradio = time.time()
         try:
             newsong = subprocess.check_output(['/home/pi/rrr/nextsongs.sh']).decode().split('\n')
@@ -323,7 +321,6 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
     username = user_id.split(':')[0]
     roomusers = ''
     msg = ''
-    fps = 0
     scroll = 0
     key = 0
     selectroom = len(room_ids) - 1
@@ -396,10 +393,10 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
         elif key == 263:
             msg = msg[:-1]
         elif key == 339 or key == 259:
-            scroll += 1
+            scroll += 5
         elif key == 338 or key == 258:
             if scroll > 0:
-                scroll = scroll - 1
+                scroll = scroll - 5
         elif key == 261:
             if selectroom < len(room_ids) - 1:
                 selectroom += 1
@@ -435,26 +432,25 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
         #reverse chatlog so latest message is at bottom
         chatlog = chatlog[::-1]
         y = maxyx[0] - msgheight
-        fps += 1
         screen.clear()
         for a in chatlog:
             #just fancy colors
             i = (len(a) % 10) + 245
             #count line height, print it
             y -= int(len(a)/maxyx[1]) + 1
+            if y < 2:
+                break
             try:
                 screen.addstr(y,0,a,curses.color_pair(i))
             except:
                 logging.exception('')
-                pass
-            if y < 2:
                 break
         #show debuugging stuff
         #screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
         screen.addstr(0,0, roomusers[:maxyx[1]-2])
         screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
-        screen.refresh()
         screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
+        screen.refresh()
 
 ###---------| FINALLY WE PUT EVERYTHING TOGETHER |---------###
 
