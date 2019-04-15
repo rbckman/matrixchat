@@ -20,6 +20,7 @@ from datetime import datetime
 import code
 import time
 import requests
+from threading import Thread
 from matrix_client.client import MatrixClient
 from matrix_client.errors import E2EUnknownDevices
 from os.path import expanduser
@@ -36,6 +37,7 @@ def argparser():
         return args.configfile
     else:
         return ''
+
 
 def getconfig(configfile):
     global logs, botapi
@@ -95,6 +97,7 @@ def startcurses():
     screen.timeout(1000)
     return screen
 
+
 def stopcurses(screen):
     screen.keypad(False)
     curses.nocbreak()
@@ -103,6 +106,13 @@ def stopcurses(screen):
 
 
 ###-------| THE BASIC FUNCTIONS  |-------------###
+
+
+def syncmatrix():
+    try:
+        client._sync(1000)
+    except:
+        logging.exception('')
 
 
 def writetolog(newmessage, room_id):
@@ -144,23 +154,13 @@ def on_message(room, event):
         break
     writetolog(newmessage, room_alias) 
 
-def resetconnection(screen, client):
-    screen.addstr(0,0, 'Oops! no connection, trying again in 5 sec...') 
-    screen.refresh()
-    client.start_listener_thread()
-    client.stop_listener_thread()
-    client.start_listener_thread()
-    return
-
-def connectionlost(e):
-    logging.exception(e)
 
 def connect(host, user_id, password):
     global client
     try:
         client = MatrixClient(host, encryption=True, restore_device_id=True)
         client.login(username=user_id, password=password)
-        client.start_listener_thread(timeout_ms=30000, exception_handler=None)
+        #client.start_listener_thread(timeout_ms=30000, exception_handler=None)
         #client.bad_sync_timeout_limit = 0
         #client.start_listener_thread()
         #client.should_listen=30000
@@ -170,7 +170,8 @@ def connect(host, user_id, password):
         quit()
     return(client)
 
-def joinroom(client, room_id):
+
+def joinroom(room_id):
     try:
         room = client.join_room(room_id)
         device_id = client.device_id
@@ -316,7 +317,9 @@ def bot(log):
 ###-------| ROOM STUFF HAPPENING FROM HERE |-------###
 
 
-def main(screen, client, user_id, rooms, room_id, room_ids, host):
+def main(screen, user_id, rooms, room_id, room_ids, host):
+    sync = Thread(target=syncmatrix, args=())
+    sync.start()
     username = user_id.split(':')[0]
     roomusers = ''
     msg = ''
@@ -328,6 +331,12 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
     timeupdate = time.time()
     oldbotmsg = ''
     while True:
+        #sync client
+        if sync.is_alive():
+            pass
+        else:
+            sync = Thread(target=syncmatrix, args=())
+            sync.start()
         c = ''
         key = 0
         try:
@@ -355,9 +364,6 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                 elif '/join' in msg:
                     return msg.split(' ')[0], msg.split(' ')[1]
                     msg = ''
-                elif '/resync' in msg:
-                    resetconnection(screen, client)
-                    msg = ''
                 elif msg == "/listrooms":
                     listrooms = client.get_rooms()
                     for l in listrooms:
@@ -365,7 +371,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                             newmessage += 'alias ' + p + '\n'
                         newmessage += listrooms[l].room_id + '\n'
                     msg = ''
-                elif msg == "/avatars":
+                elif msg == "/members":
                     whoishere = rooms[selectroom].get_joined_members()
                     newmessage = 'we have '
                     for i in whoishere:
@@ -374,12 +380,6 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
                     msg = ''
                 elif msg == "/code":
                     return msg, ''
-                    msg = ''
-                elif msg == "/debug=0":
-                    logging.basicConfig(level=logging.CRITICAL)
-                    msg = ''
-                elif msg == "/debug=1":
-                    logging.basicConfig(level=logging.DEBUG)
                     msg = ''
                 elif msg != '':
                     rooms[selectroom].send_text(msg)
@@ -421,6 +421,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
             for l in listrooms:
                 for p in listrooms[l].aliases:
                     chatlog.append('/join ' + p + '\n')
+
         #if scrolling then put messages in where they should be
         usrmsg = username + ': ' + msg
         msgheight = int(len(usrmsg)/maxyx[1] + 3)
@@ -451,6 +452,7 @@ def main(screen, client, user_id, rooms, room_id, room_ids, host):
         screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
         screen.refresh()
 
+
 ###---------| FINALLY WE PUT EVERYTHING TOGETHER |---------###
 
 
@@ -465,18 +467,18 @@ if __name__ == '__main__':
     room_ids = []
     for a in os.listdir(logs):
         room_id = a[:-4]
-        rooms.append(joinroom(client, room_id))
+        rooms.append(joinroom(room_id))
     for i in rooms:
         i.update_aliases()
         for p in i.aliases:
             room_ids.append(p)
             break
     while True:
-        cmd, attr = main(screen, client, user, rooms, room_id, room_ids, host)
+        cmd, attr = main(screen, user, rooms, room_id, room_ids, host)
         if cmd == '/join':
             if attr not in room_ids:
                 try:
-                    rooms.append(joinroom(client, attr))
+                    rooms.append(joinroom(attr))
                     rooms[-1].update_aliases()
                     for i in rooms[-1].aliases:
                         room_id = i

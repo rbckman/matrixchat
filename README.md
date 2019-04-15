@@ -4,13 +4,17 @@ Using matrix-python-sdk and curses (becuse we all love curses)
 -------------------------------------------------------------
 This is a really simple matrix chat client. Just for simple use but also to mess-a-round with matrix. You can drop into the python intrepeter in the middle of a chat and poke around with matrix-sdk :)
 
-Some commands 
+Keys
+```
+left / right | switch joined rooms
+pgup / pgdwn | scrolling
+```
 
+Commands
 ```
 /join #room:server.net:8448
-/code | gets you right into python intrepeter
-/resync need to do this if connection drops for a longer time
-/listrooms
+/code gets you to python intrepeter
+/listrooms hmm
 ```
 
 INSTALLING ON DEBIAN STRETCH
