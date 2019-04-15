@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# These is now my bots, will make a clean slate for u once I have time. -rbckman
+# Sooo... these are now my bots, will make a clean slate for u once I have time. -rbckman
 
 import time
 import logging
