@@ -184,17 +184,17 @@ def joinroom(room_id):
             room = client.create_room(alias=room_id, is_public=False, invitees=None)
         except:
             logging.exception('')
-    try:
-        room.send_text("MatrixRob is here!")
-        pass
-    except E2EUnknownDevices as e:
-        #room.verify_devices = True
-        # We don't know anyone, but send anyway
-        for user_id, devices in e.user_devices.items():
-            for device in devices:
-                #device.verified = True
-                device.ignored = True
-                # Out-of-band verification should allow to do device.verified = True instead
+    #try:
+    #    room.send_text("MatrixRob is here!")
+    #    pass
+    #except E2EUnknownDevices as e:
+    #    #room.verify_devices = True
+    #    # We don't know anyone, but send anyway
+    #    for user_id, devices in e.user_devices.items():
+    #        for device in devices:
+    #            #device.verified = True
+    #            device.ignored = True
+    #            # Out-of-band verification should allow to do device.verified = True instead
     room.add_listener(on_message)
     return room
 
@@ -303,7 +303,7 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
                 selectroom -= 1
         if room_id:
             room_id = room_ids[selectroom]
-            roomusers = rooms[selectroom].display_name
+            #roomusers = rooms[selectroom].display_name
             #load messages from file in log directory
             if not os.path.isfile(logs + room_id + '.log'):
                 with open(logs + room_id + '.log', 'a') as out:
@@ -345,7 +345,7 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
                 break
         #show debuugging stuff
         #screen.addstr(0,0, str(fps) + ' maxyx:' + str(maxyx) + ' cursor:' + str(cursor) + ' key:' + str(c))
-        screen.addstr(0,0, roomusers[:maxyx[1]-2])
+        #screen.addstr(0,0, ''.join(roomusers)[:maxyx[1]-2])
         screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
         screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
         screen.refresh()
