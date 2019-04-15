@@ -4,7 +4,6 @@
 """
 ###-----------|  MATRIX CHAT CLIENT  |------------###
 python matrix chat using matrix-python-sdk and curses
-
 hacked by rbckman
 -----------------------------------------------------
 """
@@ -79,7 +78,7 @@ def getconfig(configfile):
     return host, user, password, logs, debug
 
 
-###-------|  CUZ EVERYONE LIKES CURSES  |------###
+###-------|  CUZ EVERYBADI LOVE CURSES  |------###
 
 
 def startcurses():
