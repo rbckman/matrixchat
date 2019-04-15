@@ -4,12 +4,12 @@
 # These is now my bots, will make a clean slate for u once I have time. -rbckman
 
 import time
+import logging
+import subprocess
 
 def bot(log, botstatus):
-    lasthelp, lastradio, freqradio, freqhelp, lastsong = botstatus
     try: 
-        if not lastradio:
-            pass
+        lasthelp, lastradio, freqradio, freqhelp, lastsong = botstatus
     except:
         lastradio = 0
         freqradio = 3600

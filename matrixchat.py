@@ -11,7 +11,6 @@ hacked by rbckman
 import curses
 import sys
 import os
-import subprocess
 import logging
 import configparser
 import argparse
@@ -215,7 +214,7 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
     maxyx = screen.getmaxyx()
     cursor = screen.getyx()
     timeupdate = time.time()
-    oldbotmsg = ''
+    botstatus = ''
     while True:
         #sync client
         if sync.is_alive():
