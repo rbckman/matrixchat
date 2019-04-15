@@ -6,11 +6,12 @@ This is a really simple matrix chat client. Just for simple use but also to mess
 
 Some commands 
 
+```
 /join #room:server.net:8448
 /code | gets you right into python intrepeter
 /resync need to do this if connection drops for a longer time
 /listrooms
-
+```
 
 INSTALLING ON DEBIAN STRETCH
 -----------------------------
