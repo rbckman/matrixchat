@@ -110,7 +110,7 @@ def stopcurses(screen):
 
 def syncmatrix():
     try:
-        client._sync(1000)
+        client._sync(100)
     except:
         logging.exception('')
 
