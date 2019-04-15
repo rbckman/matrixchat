@@ -110,7 +110,7 @@ def stopcurses(screen):
 
 def syncmatrix():
     try:
-        client._sync(10)
+        client._sync(1000)
     except:
         logging.exception('')
 
@@ -204,6 +204,8 @@ def joinroom(room_id):
 
 def main(screen, user_id, rooms, room_id, room_ids, host):
     sync = Thread(target=syncmatrix, args=())
+    synctimeout = time.time()
+    sync.setDaemon(True)
     sync.start()
     username = user_id.split(':')[0]
     roomusers = ''
@@ -216,11 +218,20 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
     timeupdate = time.time()
     botstatus = ''
     while True:
-        #sync client
+        #sync client | dirty hack to retry connecion if it goes bad for more than 30s
         if sync.is_alive():
+            if time.time() - synctimeout > 30:
+                screen.addstr(0,0, 'fuuuuuuuuuuuuuu! connection problem!')
+                screen.refresh()
+                sync = Thread(target=syncmatrix, args=())
+                synctimeout = time.time()
+                sync.setDaemon(True)
+                sync.start()
             pass
         else:
             sync = Thread(target=syncmatrix, args=())
+            synctimeout = time.time()
+            sync.setDaemon(True)
             sync.start()
         c = ''
         key = 0
@@ -264,7 +275,10 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
                     newmessage += 'in the room'
                     msg = ''
                 elif msg == "/code":
-                    return msg, ''
+                    stopcurses(screen)
+                    code.interact(local=locals())
+                    screen = startcurses()
+                    #return msg, ''
                     msg = ''
                 elif msg != '':
                     rooms[selectroom].send_text(msg)
