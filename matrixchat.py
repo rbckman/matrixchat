@@ -94,7 +94,7 @@ def startcurses():
     screen.clear()
     screen.keypad(True)
     screen.nodelay(True)
-    screen.timeout(1000)
+    screen.timeout(2000)
     return screen
 
 
@@ -110,7 +110,7 @@ def stopcurses(screen):
 
 def syncmatrix():
     try:
-        client._sync(1000)
+        client._sync(30000)
     except:
         logging.exception('')
 
@@ -218,10 +218,10 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
     timeupdate = time.time()
     botstatus = ''
     while True:
-        #sync client | dirty hack to retry connecion if it goes bad for more than 30s
+        #sync client | hack to retry connection if it goes bad for more than 30s
         if sync.is_alive():
             if time.time() - synctimeout > 30:
-                screen.addstr(0,0, 'fuuuuuuuuuuuuuu! connection problem!')
+                screen.addstr(0,0, 'connection problem!')
                 screen.refresh()
                 sync = Thread(target=syncmatrix, args=())
                 synctimeout = time.time()
