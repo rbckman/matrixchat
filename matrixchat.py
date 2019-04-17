@@ -220,13 +220,16 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
     while True:
         #sync client | hack to retry connection if it goes bad for more than 30s
         if sync.is_alive():
-            if time.time() - synctimeout > 30:
+            if time.time() - synctimeout > 35:
                 screen.addstr(0,0, 'connection problem!')
                 screen.refresh()
-                sync = Thread(target=syncmatrix, args=())
-                synctimeout = time.time()
-                sync.setDaemon(True)
-                sync.start()
+                try:
+                    sync = Thread(target=syncmatrix, args=())
+                    synctimeout = time.time()
+                    sync.setDaemon(True)
+                    sync.start()
+                except:
+                    logging.exception('')
             pass
         else:
             sync = Thread(target=syncmatrix, args=())
