@@ -5,9 +5,11 @@
 
 import time
 import logging
+import requests
 import subprocess
+from datetime import datetime
 
-def bot(log, botstatus):
+def bot(log, botapi, botstatus):
     try: 
         lasthelp, lastradio, freqradio, freqhelp, lastsong = botstatus
     except:
