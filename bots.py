@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# Sooo... these are now my bots, will make a clean slate for u once I have time. -rbckman
+# Sooo... these are my bots, will make a clean slate for u once I have time. -rbckman
 
 import time
 import logging
@@ -13,10 +13,10 @@ def bot(log, botapi, botstatus):
     try: 
         lasthelp, lastradio, freqradio, freqhelp, lastsong = botstatus
     except:
-        lastradio = 0
+        lastradio = time.time()
         freqradio = 3600
-        lasthelp = 0
-        freqhelp = 86400
+        lasthelp = time.time()
+        freqhelp = 864000
         lastsong = ''
     msg = ''
     # put your bot scripts here! the ones here now are my bots, should make an empty plate for u.
@@ -45,9 +45,13 @@ def bot(log, botapi, botstatus):
     elif 'anetbot status' in log: 
         progress = requests.get(url=botapi).json()
         try:
+            hoursleft = str(int(progress['progress']['printTimeLeft']/60/60))
+            minutesleft = str(int(progress['progress']['printTimeLeft']%3600/60))
+            hoursprinted = str(int(progress['progress']['printTime']/60/60)) 
+            minutesprinted = str(int(progress['progress']['printTime']%3600/60)) 
             msg = 'anetbot:'+str(progress['state'])+' model:'+(progress['job']['file']['name'])
-            msg += ' time left: ' + str(int(progress['progress']['printTimeLeft']/60))
-            msg += ' has been printing for: ' + str(int(progress['progress']['printTime']/60)) + ' min'
+            msg += ' time left: ' + hoursleft + ' h ' + minutesleft + ' min'
+            msg += ' has been printing for: ' + hoursprinted + ' h ' + minutesprinted + ' min' 
             msg += ' is ' + str(int(progress['progress']['completion'])) + '% complete'
         except:
             msg = "anetbot: I'm currently offline, thanks for asking!"
