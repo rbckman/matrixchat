@@ -313,10 +313,14 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
                     out.write('Welcome to ' + room_id + '!\n')
             chatlog = [line.rstrip('\n') for line in open(logs + room_id + '.log')]
             if botapi:
-                botmsg, botstatus = bot(chatlog[-1], botstatus)
+                botmsg, botstatus = bot(chatlog[-1], botapi, botstatus)
                 if botmsg:
-                    rooms[selectroom].send_text(botmsg)
-                    botmsg = ''
+                    try:
+                        rooms[selectroom].send_text(botmsg)
+                        botmsg = ''
+                    except:
+                        logging.exception('')
+                        newmessage = ('Oops! something wrong!\n')
         else:
             chatlog = ['Join or create a room!']
             listrooms = client.get_rooms()
