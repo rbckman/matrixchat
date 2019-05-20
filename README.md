@@ -31,7 +31,7 @@ sudo ldconfig
 
 [matrix-python-sdk-e2e](https://github.com/Zil0/matrix-python-sdk/tree/e2e_beta_2)
 ```
-sudo install python3-dev python3-pip build-essential
+sudo apt install python3-dev python3-pip build-essential libffi-dev
 pip3 install -e 'git+https://github.com/Zil0/matrix-python-sdk@e2e_beta_2#egg=matrix-python-sdk-e2e[e2e]' --process-dependency-links
 ```
 if it throws segmentation fault do this:
