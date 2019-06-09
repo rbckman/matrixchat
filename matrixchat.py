@@ -114,12 +114,10 @@ def syncmatrix():
     except:
         logging.exception('')
 
-
 def writetolog(newmessage, room_id):
     if room_id:
         with open(logs + room_id + '.log', 'a') as out:
             out.write(newmessage + '\n')
-
 
 def on_message(room, event):
     newmessage = ''
@@ -159,7 +157,7 @@ def connect(host, user_id, password):
     global client
     try:
         client = MatrixClient(host, encryption=True, restore_device_id=True)
-        client.login(username=user_id, password=password)
+        client.login(username=user_id, password=password, sync=False)
         #client.start_listener_thread(timeout_ms=30000, exception_handler=None)
         #client.bad_sync_timeout_limit = 0
         #client.start_listener_thread()
@@ -283,6 +281,9 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
                     screen = startcurses()
                     #return msg, ''
                     msg = ''
+                elif msg == "/codeclient":
+                    return msg, ''
+                    msg = ''
                 elif msg != '':
                     rooms[selectroom].send_text(msg)
                     msg = ''
@@ -313,7 +314,7 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
                     out.write('Welcome to ' + room_id + '!\n')
             chatlog = [line.rstrip('\n') for line in open(logs + room_id + '.log')]
             if botapi:
-                botmsg, botstatus = bot(chatlog[-1], botapi, botstatus)
+                botmsg, botstatus = bot(chatlog[-1], botapi, botstatus, rooms[selectroom], client)
                 if botmsg:
                     try:
                         rooms[selectroom].send_text(botmsg)
@@ -356,6 +357,7 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
         screen.addstr(maxyx[0]-1,0, room_id[:maxyx[1]-2], curses.color_pair(242))
         screen.addstr(maxyx[0]-int(len(usrmsg)/maxyx[1] + 2),0,usrmsg, curses.color_pair(71))
         screen.refresh()
+        time.sleep(0.02)
 
 
 ###---------| FINALLY WE PUT EVERYTHING TOGETHER |---------###
@@ -391,7 +393,7 @@ if __name__ == '__main__':
                 except:
                     logging.exception('')
                     writetolog('something went wrong', room_id)
-        elif cmd == '/code':
+        elif cmd == '/codeclient':
             stopcurses(screen)
             code.interact(local=locals())
             screen = startcurses()
