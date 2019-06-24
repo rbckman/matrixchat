@@ -73,6 +73,18 @@ def bot(log, botapi, botstatus, room, client):
         except:
             msg = 'growbot: not feeling ok, chack logs..'
             logging.exception('')
+    elif 'growbot mist' in log:
+        try:
+            mist = log.split("mist",1)[1].strip()
+            mist = mist.strip(' ')
+            mist = mist.split(' ',1)
+            with open('/home/pi/growbox/humidifier', 'w') as f:
+                for a in mist:
+                    f.write(a + '\n')
+            msg = 'growbot: okey, misting every ' + mist[0] + ' min for ' + mist[1] + ' seconds'
+        except:
+            msg = 'growbot: needs to be intervall in minutes and then for how long in seconds'
+            logging.exception('')
     elif 'growbot fan' in log:
         try:
             fanstatus = log.split("fan",1)[1].strip()
