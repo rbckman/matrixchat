@@ -65,7 +65,7 @@ def bot(log, botapi, botstatus, room, client):
             newsong = subprocess.check_output(['/home/pi/rrr/nextsongs.sh']).decode().split('\n')
             if newsong[0] != lastsong:
                 msg = 'radiobot: ' + newsong[0].replace('/media/robinsfirma/djsmellsfunny/','')
-                msg += ' listen at http://radiorymd.com'
+                msg += ' listen at http://radiorymd.com:8000/radiorymd'
                 lastsong = newsong[0]
         except:
             msg = 'radiobot: not feeling ok, chack logs..'

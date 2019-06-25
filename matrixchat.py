@@ -359,9 +359,8 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
         screen.refresh()
         time.sleep(0.02)
 
-def lobby(configfile):
+def lobby(configfile, screen):
     host, user, password, logs, debug = getconfig(configfile)
-    screen = startcurses()
     client = connect(host, user, password)
     rooms = []
     room_id = ''
@@ -400,5 +399,6 @@ if __name__ == '__main__':
     configfile = argparser()
     host, user, password, logs, debug = getconfig(configfile)
     logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.WARNING)
-    lobby(configfile)
+    screen = startcurses()
+    lobby(configfile, screen)
     stopcurses(screen)
