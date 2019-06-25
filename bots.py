@@ -9,7 +9,7 @@ import requests
 import subprocess
 from datetime import datetime
 
-def bot(log, botapi, botstatus):
+def bot(log, botapi, botstatus, room, client):
     try: 
         lasthelp, lastradio, freqradio, freqhelp, lastsong = botstatus
     except:
