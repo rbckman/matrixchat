@@ -359,14 +359,8 @@ def main(screen, user_id, rooms, room_id, room_ids, host):
         screen.refresh()
         time.sleep(0.02)
 
-
-###---------| FINALLY WE PUT EVERYTHING TOGETHER |---------###
-
-
-if __name__ == '__main__':
-    configfile = argparser()
+def lobby(configfile):
     host, user, password, logs, debug = getconfig(configfile)
-    logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.WARNING)
     screen = startcurses()
     client = connect(host, user, password)
     rooms = []
@@ -399,4 +393,12 @@ if __name__ == '__main__':
             screen = startcurses()
         elif cmd == '/quit':
             break
+
+###---------| FINALLY WE PUT EVERYTHING TOGETHER |---------###
+
+if __name__ == '__main__':
+    configfile = argparser()
+    host, user, password, logs, debug = getconfig(configfile)
+    logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.WARNING)
+    lobby(configfile)
     stopcurses(screen)
