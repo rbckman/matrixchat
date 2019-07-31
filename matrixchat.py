@@ -19,7 +19,7 @@ from datetime import datetime
 import code
 import time
 import requests
-from growbot import bot
+from torkbot import bot
 from threading import Thread
 from matrix_client.client import MatrixClient
 from matrix_client.errors import E2EUnknownDevices
