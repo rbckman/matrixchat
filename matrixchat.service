@@ -1,0 +1,14 @@
+[Unit]
+Description=matrixchat
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/matrixchat/matrixchat.py
+User=pi
+Restart=on-failure
+StandardInput=tty-force
+TTYPath=/dev/tty1
+
+[Install]
+WantedBy=multi-user.target
