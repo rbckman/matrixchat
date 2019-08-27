@@ -19,6 +19,7 @@ from datetime import datetime
 import code
 import time
 import requests
+import socket
 from torkbot import bot
 from threading import Thread
 from matrix_client.client import MatrixClient
@@ -78,6 +79,20 @@ def getconfig(configfile):
             with open(configfile,'w') as f:
                 config.write(f)
     return host, user, password, logs, debug
+
+
+###-------|  Check if we reach the webz  |------###
+
+
+def webz_on():
+    try:
+        # connect to the host -- tells us if the host is actually
+        # reachable
+        socket.create_connection(("www.google.com", 80))
+        return True
+    except OSError:
+        pass
+    return False
 
 
 ###-------|  CUZ EVERYBADI LOVE CURSES  |------###
@@ -399,6 +414,11 @@ if __name__ == '__main__':
     configfile = argparser()
     host, user, password, logs, debug = getconfig(configfile)
     logging.basicConfig(filename=debug, filemode='a', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.WARNING)
-    screen = startcurses()
-    lobby(configfile, screen)
-    stopcurses(screen)
+    while True:
+        if webz_on() == True:
+    	    screen = startcurses()
+    	    lobby(configfile, screen)
+    	    stopcurses(screen)
+        else:
+            print("no internet connection!")
+            time.sleep(3)

@@ -16,7 +16,7 @@ def bot(log, botapi, botstatus, room, client):
         laststatus, freqstatus, lastpic = botstatus
     except:
         laststatus = time.time()
-        freqstatus = 14400
+        freqstatus = 3600
         lastpic = ''
     msg = ''
     # put your bot scripts here! the ones here now are my bots, should make an empty plate for u.
@@ -26,7 +26,7 @@ def bot(log, botapi, botstatus, room, client):
     # botapi = key
   
     #torkbot
-    if (time.time() - laststatus > freqstatus) or ('torkbot status' in log):
+    if (time.time() - laststatus > freqstatus) or ('torkbot status' in log) or ('S' in log):
         laststatus = time.time()
         try:
             list_of_files = glob.glob('/home/pi/camera/*')
@@ -55,7 +55,7 @@ def bot(log, botapi, botstatus, room, client):
                 lights = f.read().splitlines()[0]
         except:
             lights = ''
-        msg = 'torkbot: heres my status ' + sensor + ' lights:' + lights + ' fan:' + fan
+        msg = 'torkbot: heres my status ' + sensor
 
     elif 'torkbot freq' in log:
         try:
