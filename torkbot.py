@@ -34,7 +34,7 @@ def bot(log, botapi, botstatus, room, client):
             if newpic != lastpic:
                 with open('/home/pi/growbox.jpeg', 'rb') as image:
                     f = image.read()
-                    imageurl = client.upload(f, 'image/jpeg',)
+                    imageurl = client.upload(f, 'image/jpeg', 'torken.jpeg')
                     room.send_image(imageurl, 'mmm')
                     lastpic = newpic
         except:
