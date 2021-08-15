@@ -23,7 +23,6 @@ import socket
 from radiobot import bot
 from threading import Thread
 from matrix_client.client import MatrixClient
-from matrix_client.errors import E2EUnknownDevices
 from os.path import expanduser
 
 
@@ -169,13 +168,13 @@ def on_message(room, event):
 def connect(host, user_id, password):
     global client
     try:
-        client = MatrixClient(host, encryption=True, restore_device_id=True)
+        client = MatrixClient(host)
         client.login(username=user_id, password=password, sync=False)
         #client.start_listener_thread(timeout_ms=30000, exception_handler=None)
         #client.bad_sync_timeout_limit = 0
         #client.start_listener_thread()
         #client.should_listen=30000
-        client.add_key_forward_listener(lambda x: writetolog('got new keys' + x))
+        #client.add_key_forward_listener(lambda x: writetolog('got new keys' + x))
     except:
         logging.exception('')
         quit()
@@ -186,7 +185,7 @@ def joinroom(room_id):
     try:
         room = client.join_room(room_id)
         device_id = client.device_id
-        fingerprint = client.get_fingerprint()
+        #fingerprint = client.get_fingerprint()
         assert client.device_id == device_id
         # Print every keys which arrive to us
     except:
