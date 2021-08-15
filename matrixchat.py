@@ -20,7 +20,7 @@ import code
 import time
 import requests
 import socket
-from torkbot import bot
+from radiobot import bot
 from threading import Thread
 from matrix_client.client import MatrixClient
 from matrix_client.errors import E2EUnknownDevices
@@ -161,10 +161,8 @@ def on_message(room, event):
         newmessage = msgtime + buddy + msg
     else:
         newmessage = (event['type'])
-    room.update_aliases()
-    for i in room.aliases:
-        room_alias = i
-        break
+    room_alias = room.canonical_alias
+    #print(room_alias)
     writetolog(newmessage, room_alias) 
 
 
@@ -383,11 +381,9 @@ def lobby(configfile, screen):
     for a in os.listdir(logs):
         room_id = a[:-4]
         rooms.append(joinroom(room_id))
-    for i in rooms:
-        i.update_aliases()
-        for p in i.aliases:
-            room_ids.append(p)
-            break
+        room_ids.append(room_id)
+        print("FUUUCK")
+    print(rooms[0].room_id)
     while True:
         cmd, attr = main(screen, user, rooms, room_id, room_ids, host)
         if cmd == '/join':
